@@ -1,17 +1,28 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
+
 import { useState } from 'react';
+
 import { StyleSheet, Text, View } from 'react-native';
 
 import AppButton from '@/components/AppButton';
+
 import { COLORS } from '@/constants/colors';
-import { STUDENT_ID } from '@/constants/student';
+
+import { useAuth } from '@/lib/auth';
+
 import { registerAttendance } from '@/lib/database';
 
 export default function ScanScreen() {
+  const { user } = useAuth();
+
   const [permission, requestPermission] = useCameraPermissions();
+
   const [scanned, setScanned] = useState(false);
+
   const [lastData, setLastData] = useState<string | null>(null);
+
   const [message, setMessage] = useState<string | null>(null);
+
   const [success, setSuccess] = useState(false);
 
   if (!permission) {
@@ -22,9 +33,11 @@ export default function ScanScreen() {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Camera Permission Needed</Text>
+
         <Text style={styles.subtitle}>
           We need access to your camera to scan QR codes.
         </Text>
+
         <AppButton
           theme="primary"
           title="Grant Permission"
@@ -38,7 +51,10 @@ export default function ScanScreen() {
   const handleBarcodeScanned = ({ data }: { data: string }) => {
     setScanned(true);
     setLastData(data);
-    registerAttendance(data, STUDENT_ID).then((result) => {
+
+    const studentId = user?.id ?? 'unknown';
+
+    registerAttendance(data, studentId).then((result) => {
       setMessage(result.message);
       setSuccess(result.success);
     });
@@ -61,12 +77,17 @@ export default function ScanScreen() {
 
       <View style={styles.overlay}>
         <Text style={styles.overlayText}>
-          {scanned ? 'QR Code detected!' : 'Point your camera at a QR code'}
+          {scanned
+            ? 'QR Code detected!'
+            : 'Point your camera at a QR code'}
         </Text>
 
         {scanned && message && (
           <Text
-            style={[styles.scanResult, success ? styles.success : styles.error]}
+            style={[
+              styles.scanResult,
+              success ? styles.success : styles.error,
+            ]}
           >
             {message}
           </Text>
@@ -97,15 +118,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
+
   camera: {
     ...StyleSheet.absoluteFillObject,
   },
+
   title: {
     fontSize: 20,
     fontWeight: '600',
     color: COLORS.textPrimary,
     marginBottom: 8,
   },
+
   subtitle: {
     fontSize: 14,
     color: COLORS.textSecondary,
@@ -113,6 +137,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 16,
   },
+
   overlay: {
     position: 'absolute',
     left: 20,
@@ -123,6 +148,7 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
   },
+
   overlayText: {
     fontSize: 16,
     fontWeight: '600',
@@ -130,18 +156,22 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     textAlign: 'center',
   },
+
   scanResult: {
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 8,
     fontWeight: '600',
   },
+
   success: {
     color: '#2E7D32',
   },
+
   error: {
     color: '#C62828',
   },
+
   scanData: {
     fontSize: 12,
     color: COLORS.textSecondary,
